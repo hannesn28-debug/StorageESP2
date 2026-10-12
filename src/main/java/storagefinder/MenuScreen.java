@@ -23,8 +23,9 @@ public class MenuScreen extends Screen {
 		int right = this.width / 2 + 3;
 
 		addRenderableWidget(new StringWidget(this.width / 2 - 100, 10, 200, 14, this.title, this.font).alignCenter());
-
 		addRenderableWidget(toggle(left, 28, () ->
+								   int titleWidth = this.font.width(this.title);
+addRenderableWidget(new StringWidget(this.width / 2 - titleWidth / 2, 10, titleWidth, 14, this.title, this.font));
 			Component.literal("Anzeige: " + onOff(Config.enabled)), () -> Config.enabled = !Config.enabled));
 
 		addRenderableWidget(toggle(right, 28, () ->
