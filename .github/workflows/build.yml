@@ -10,6 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Dateien einsortieren
+        run: |
+          mkdir -p src/main/java/storagefinder src/main/resources/assets/storagefinder/lang
+          for f in *.java; do [ -e "$f" ] && mv -f "$f" src/main/java/storagefinder/ || true; done
+          for f in de_de.json en_us.json; do [ -e "$f" ] && mv -f "$f" src/main/resources/assets/storagefinder/lang/ || true; done
+          [ -e fabric.mod.json ] && mv -f fabric.mod.json src/main/resources/ || true
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
