@@ -1,0 +1,20 @@
+{
+	"schemaVersion": 1,
+	"id": "storagefinder",
+	"version": "${version}",
+	"name": "Storage Finder",
+	"description": "Client-Mod: Zeigt Kisten, Trichter, Spawner und andere Lager-Blöcke durch Wände an.",
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"storagefinder.StorageFinderClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.1",
+		"minecraft": "~26.1",
+		"java": ">=25",
+		"fabric-api": "*"
+	}
+}
