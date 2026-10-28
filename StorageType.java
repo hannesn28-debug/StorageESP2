@@ -27,7 +27,8 @@ public enum StorageType {
 	CRAFTER("Crafter", 0xFF99CCFF, "crafter"),
 	BOOKSHELF("Bücherregale", 0xFFDDBB88, "chiseled_bookshelf"),
 	POT("Dekotöpfe", 0xFFCC6644, "decorated_pot"),
-	DEBRIS("Antiker Schutt", 0xFFE0A070);
+	DEBRIS("Antiker Schrott", 0xFFE0A070),
+	AMETHYST("Amethyst-Cluster", 0xFFD070FF);
 
 	private static final Map<String, StorageType> BY_ID = new HashMap<>();
 
@@ -47,6 +48,12 @@ public enum StorageType {
 		this.label = label;
 		this.color = color;
 		this.ids = ids;
+	}
+
+	/** Registry-Name des BlockEntity-Typs (z. B. "chest") oder ein leerer Text. */
+	public static String idOf(BlockEntity blockEntity) {
+		var key = BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(blockEntity.getType());
+		return key == null ? "" : key.getPath();
 	}
 
 	/** Liefert die Art des BlockEntity oder null, wenn er nicht angezeigt werden soll. */

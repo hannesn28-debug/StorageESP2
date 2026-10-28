@@ -71,8 +71,9 @@ public final class Tracker {
 			}
 		}
 
-		if (Config.isEnabled(StorageType.DEBRIS)) {
-			DebrisScanner.forEach(pos -> draw(pos, StorageType.DEBRIS, eye, tracerStart, max, maxSq));
+		StorageType scanned = DebrisScanner.activeType();
+		if (scanned != null && Config.isEnabled(scanned)) {
+			DebrisScanner.forEach(pos -> draw(pos, scanned, eye, tracerStart, max, maxSq));
 		}
 
 		if (Config.susChunks) {

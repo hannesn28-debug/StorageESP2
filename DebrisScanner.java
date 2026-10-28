@@ -12,29 +12,38 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
 /**
- * Sucht im Nether nach Ancient Debris in den bereits geladenen Chunks.
- * Pro Tick werden nur wenige Chunks geprüft, damit das Spiel nicht ruckelt.
+ * Sucht je nach Dimension nach einem bestimmten Block in den bereits geladenen Chunks:
+ * im Nether nach Antikem Schrott (Ancient Debris), in der Oberwelt nach ausgewachsenen
+ * Amethyst-Clustern (Geoden). Pro Tick werden nur wenige Chunks geprüft, damit das Spiel nicht ruckelt.
+ * Zeigt über der Hotbar an, wie viele Funde es gerade gibt.
  */
 public final class DebrisScanner {
-	private static final int RADIUS = 6;
-	private static final int MIN_Y = 0;
-	private static final int MAX_Y = 40;
-	private static final int CHUNKS_PER_TICK = 2;
+	private static final int RADIUS = 8;
+	private static final int CHUNKS_PER_TICK = 3;
 
 	private static final Map<Long, List<BlockPos>> FOUND = new HashMap<>();
-	private static final BlockPos.MutableBlockPos CURSOR_POS = new BlockPos.MutableBlockPos();
+	private static final BlockPos.MutableBlockPos SCAN_POS = new BlockPos.MutableBlockPos();
 	private static int cursor = 0;
+	private static int lastReported = -1;
+	private static StorageType activeType = null;
 
 	private DebrisScanner() {
 	}
 
 	public static void init() {
 		ClientTickEvents.END_CLIENT_TICK.register(DebrisScanner::tick);
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> FOUND.clear());
+		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> reset());
+	}
+
+	/** Welche Art gerade gesucht wird (Antiker Schrott oder Amethyst), oder null. */
+	public static StorageType activeType() {
+		return activeType;
 	}
 
 	public static void forEach(Consumer<BlockPos> consumer) {
@@ -45,16 +54,54 @@ public final class DebrisScanner {
 		}
 	}
 
+	public static int count() {
+		int total = 0;
+		for (List<BlockPos> list : FOUND.values()) {
+			total += list.size();
+		}
+		return total;
+	}
+
+	private static void reset() {
+		FOUND.clear();
+		cursor = 0;
+		lastReported = -1;
+		activeType = null;
+	}
+
 	private static void tick(Minecraft minecraft) {
 		ClientLevel level = minecraft.level;
 		LocalPlayer player = minecraft.player;
 
-		if (level == null || player == null || !Config.enabled
-			|| !Config.isEnabled(StorageType.DEBRIS) || level.dimension() != Level.NETHER) {
-			if (!FOUND.isEmpty()) {
-				FOUND.clear();
+		StorageType wanted = null;
+		Block block = null;
+		int minY = 0;
+		int maxY = 0;
+
+		if (level != null && player != null && Config.enabled) {
+			if (level.dimension() == Level.NETHER) {
+				wanted = StorageType.DEBRIS;
+				block = Blocks.ANCIENT_DEBRIS;
+				minY = 4;
+				maxY = 70;
+			} else if (level.dimension() == Level.OVERWORLD) {
+				wanted = StorageType.AMETHYST;
+				block = Blocks.AMETHYST_CLUSTER;
+				minY = -64;
+				maxY = 40;
+			}
+		}
+
+		if (wanted == null || !Config.isEnabled(wanted)) {
+			if (activeType != null || !FOUND.isEmpty() || lastReported != -1) {
+				reset();
 			}
 			return;
+		}
+
+		if (wanted != activeType) {
+			reset();
+			activeType = wanted;
 		}
 
 		int playerChunkX = player.getBlockX() >> 4;
@@ -78,26 +125,33 @@ public final class DebrisScanner {
 				continue;
 			}
 
-			List<BlockPos> result = scanChunk(level, chunkX, chunkZ);
+			List<BlockPos> result = scanChunk(level, chunkX, chunkZ, block, minY, maxY);
 			if (result.isEmpty()) {
 				FOUND.remove(key);
 			} else {
 				FOUND.put(key, result);
 			}
 		}
+
+		// Rückmeldung, damit man sieht, dass der Scanner läuft.
+		int found = count();
+		if (found != lastReported) {
+			lastReported = found;
+			minecraft.gui.setOverlayMessage(Component.literal(wanted.label + " gefunden: " + found), false);
+		}
 	}
 
-	private static List<BlockPos> scanChunk(ClientLevel level, int chunkX, int chunkZ) {
+	private static List<BlockPos> scanChunk(ClientLevel level, int chunkX, int chunkZ, Block block, int minY, int maxY) {
 		List<BlockPos> result = new ArrayList<>();
 		int startX = chunkX << 4;
 		int startZ = chunkZ << 4;
 
 		for (int x = 0; x < 16; x++) {
 			for (int z = 0; z < 16; z++) {
-				for (int y = MIN_Y; y <= MAX_Y; y++) {
-					CURSOR_POS.set(startX + x, y, startZ + z);
-					if (level.getBlockState(CURSOR_POS).is(Blocks.ANCIENT_DEBRIS)) {
-						result.add(CURSOR_POS.immutable());
+				for (int y = minY; y <= maxY; y++) {
+					SCAN_POS.set(startX + x, y, startZ + z);
+					if (level.getBlockState(SCAN_POS).is(block)) {
+						result.add(SCAN_POS.immutable());
 					}
 				}
 			}
