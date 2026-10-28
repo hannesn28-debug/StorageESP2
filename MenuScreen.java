@@ -41,10 +41,10 @@ public class MenuScreen extends Screen {
 		}).bounds(right, 28 + ROW, COLUMN_WIDTH, BUTTON_HEIGHT).build());
 
 		addRenderableWidget(toggle(left, 28 + ROW * 2, () ->
-			Component.literal("Sus-Chunks: " + onOff(Config.susChunks)), () -> Config.susChunks = !Config.susChunks));
+			Component.literal("Chunk-Finder: " + onOff(Config.susChunks)), () -> Config.susChunks = !Config.susChunks));
 
 		addRenderableWidget(toggle(right, 28 + ROW * 2, () ->
-			Component.literal("Sus ab: " + Config.susThreshold + " Lager"), Config::cycleThreshold));
+			Component.literal("Basis ab: " + Config.susThreshold + " %"), Config::cycleThreshold));
 
 		StorageType[] types = StorageType.values();
 		int startY = 28 + ROW * 3 + 8;

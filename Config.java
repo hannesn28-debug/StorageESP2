@@ -18,7 +18,7 @@ public final class Config {
 	public static final int[] DISTANCES = {32, 64, 128, 256, 0};
 
 	/** Ab so vielen Lager-Blöcken in einem Chunk gilt er als verdächtig. */
-	public static final int[] THRESHOLDS = {4, 8, 12, 20};
+	public static final int[] THRESHOLDS = {25, 40, 60, 80};
 
 	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 	private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("storagefinder.json");
@@ -27,7 +27,7 @@ public final class Config {
 	public static boolean tracers = false;
 	public static int maxDistance = 128;
 	public static boolean susChunks = true;
-	public static int susThreshold = 8;
+	public static int susThreshold = 40;
 
 	private static final Map<StorageType, Boolean> TYPES = new EnumMap<>(StorageType.class);
 
@@ -99,6 +99,13 @@ public final class Config {
 			maxDistance = data.maxDistance;
 			susChunks = data.susChunks;
 			susThreshold = data.susThreshold;
+			boolean known = false;
+			for (int value : THRESHOLDS) {
+				known |= value == susThreshold;
+			}
+			if (!known) {
+				susThreshold = 40;
+			}
 			if (data.types != null) {
 				for (StorageType type : StorageType.values()) {
 					Boolean value = data.types.get(type.name());
@@ -134,7 +141,7 @@ public final class Config {
 		boolean tracers = false;
 		int maxDistance = 128;
 		boolean susChunks = true;
-		int susThreshold = 8;
+		int susThreshold = 40;
 		Map<String, Boolean> types = new LinkedHashMap<>();
 	}
 }
